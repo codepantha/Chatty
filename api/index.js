@@ -9,15 +9,16 @@ const connectDB = require('./db/connect');
 // custom middleware
 const errorHandlerMiddleware = require('./middleware/errorHandler');
 
+// routes
+const authRouter = require('./routes/auth.routes');
+
 const app = express();
 
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(cors());
 
-app.get('/', function (req, res) {
-  res.send('hello, world');
-});
+app.use('/api/v1/auth', authRouter);
 
 app.use(errorHandlerMiddleware);
 
