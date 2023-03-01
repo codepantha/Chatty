@@ -12,6 +12,15 @@ const errorHandlerMiddleware = (err, req, res, next) => {
   }
 
   // TODO: database-related errors
+  if (err.code && err.code === 11000) {
+    const field = Object.keys(err.keyValue)[0];
+    customError.statusCode = StatusCodes.BAD_REQUEST;
+    customError.message = `${field} ${err.keyValue[field]} already exists. Please choose another.`;
+
+    return res
+      .status(customError.statusCode)
+      .json({ msg: customError.message });
+  }
 
   return res.status(customError.statusCode).json({ msg: customError.message });
 };
