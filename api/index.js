@@ -6,6 +6,9 @@ const cors = require('cors');
 const morgan = require('morgan');
 const connectDB = require('./db/connect');
 
+// custom middleware
+const errorHandlerMiddleware = require('./middleware/errorHandler');
+
 const app = express();
 
 app.use(morgan('dev'));
@@ -15,6 +18,8 @@ app.use(cors());
 app.get('/', function (req, res) {
   res.send('hello, world');
 });
+
+app.use(errorHandlerMiddleware);
 
 const PORT = process.env.PORT || 5000;
 
