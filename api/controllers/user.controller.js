@@ -1,7 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const sendVerificationEmail = require('../utils/email/verifyEmail');
-const UnauthenticatedError = require('../errors/Unauthenticated');
 const { decodeToken } = require('../utils/helper');
 const UnauthorizedError = require('../errors/Unauthorized');
 
@@ -18,11 +17,14 @@ const register = async (req, res) => {
 };
 
 const verify = async (req, res) => {
-  const { token } = req.params;
+  const {
+    params: { token },
+    query: { email }
+  } = req;
 
   if (token) {
-    const decoded = decodeToken(token);
-    if (!decoded) throw new UnauthenticatedError('invalid token');
+    const decoded = decodeToken(token, email, res);
+    if (!decoded) return;
 
     const { userId } = decoded;
 
@@ -30,11 +32,16 @@ const verify = async (req, res) => {
 
     if (!user) throw new UnauthorizedError('User does not exist');
 
+    if (user.isVerified) {
+      res.send('Email already activated. Please log in.');
+      return;
+    }
+
     user.isVerified = true;
     user.save();
 
-    res.status(200).json(user);
+    res.send('Email verified successfully!');
   }
-}
+};
 
 module.exports = { register, verify };

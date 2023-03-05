@@ -4,6 +4,6 @@ const router = require('express').Router();
 
 router.post('/register', register);
 
-router.post('/verify/:token', verify)
+router.get('/verify/:token', verify)
 
 module.exports = router;
