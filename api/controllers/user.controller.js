@@ -13,7 +13,15 @@ const register = async (req, res) => {
 
   await sendVerificationEmail({ name: username, to: email, token });
 
-  if (user) res.status(201).json(user);
+  if (user) {
+    const { password, ...userData } = user._doc;
+    res
+      .status(201)
+      .json({
+        msg: 'An activation has been sent to your email',
+        user: userData
+      });
+  }
 };
 
 const verify = async (req, res) => {
