@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .loginText {
+    @apply underline uppercase cursor-pointer hover:text-blue-500 hover:font-bold
+  }
+}
