@@ -5,7 +5,6 @@ const User = require('../models/User');
 const sendVerificationEmail = require('../utils/email/verifyEmail');
 const { decodeToken } = require('../utils/helper');
 const UnauthorizedError = require('../errors/Unauthorized');
-const NotFoundError = require('../errors/NotFound');
 const UnauthenticatedError = require('../errors/Unauthenticated');
 const { StatusCodes } = require('http-status-codes');
 
@@ -47,7 +46,7 @@ const login = async (req, res) => {
       'user is not verified. Please check your email for verification istructions'
     );
 
-  const accessToken = await user.createJWT();
+  const accessToken = await user.createJWT('loginToken');
 
   delete user._doc.password;
 
@@ -64,7 +63,7 @@ const verify = async (req, res) => {
   } = req;
 
   if (token) {
-    const decoded = decodeToken(token, email, res);
+    const decoded = decodeToken(token, email, res, type="registration");
     if (!decoded) return;
 
     const { userId } = decoded;
@@ -85,4 +84,13 @@ const verify = async (req, res) => {
   }
 };
 
-module.exports = { register, login, verify };
+const profile = async (req, res) => {
+  const { token } = req.cookies;
+
+  if (token) {
+    const { userId, username } = decodeToken(token)
+    return res.json({ userId, username })
+  }
+};
+
+module.exports = { register, login, verify, profile };

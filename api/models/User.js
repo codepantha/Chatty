@@ -32,15 +32,16 @@ UserSchema.methods.comparePassword = async function (passwordInput) {
   return isMatch;
 };
 
-UserSchema.methods.createJWT = function () {
+UserSchema.methods.createJWT = function (type = null) {
   return jwt.sign(
     {
       userId: this._id,
-      email: this.email
+      email: this.email,
+      username: this.username
     },
     JWT_KEY,
     {
-      expiresIn: JWT_LIFETIME
+      expiresIn: type === 'loginToken' ? '1d' : JWT_LIFETIME
     }
   );
 };
