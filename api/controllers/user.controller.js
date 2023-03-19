@@ -1,13 +1,20 @@
-const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+
+const User = require('../models/User');
 const sendVerificationEmail = require('../utils/email/verifyEmail');
 const { decodeToken } = require('../utils/helper');
 const UnauthorizedError = require('../errors/Unauthorized');
+const NotFoundError = require('../errors/NotFound');
+const UnauthenticatedError = require('../errors/Unauthenticated');
+const { StatusCodes } = require('http-status-codes');
 
 const register = async (req, res) => {
   const { username, email, password } = req.body;
 
-  const user = await User.create({ username, email, password });
+  const salt = await bcrypt.genSalt(10);
+  const hashedPw = await bcrypt.hash(password, salt);
+  const user = await User.create({ username, email, password: hashedPw });
 
   const token = await user.createJWT();
 
@@ -15,13 +22,39 @@ const register = async (req, res) => {
 
   if (user) {
     const { password, ...userData } = user._doc;
-    res
-      .status(201)
-      .json({
-        msg: 'An activation has been sent to your email',
-        user: userData
-      });
+    res.status(StatusCodes.CREATED).json({
+      msg: 'An activation has been sent to your email',
+      user: userData
+    });
   }
+};
+
+const login = async (req, res) => {
+  const { username, password } = req.body;
+  if (password === 'password') console.log('password is password');
+
+  const user = await User.findOne({ username });
+
+  if (!user) throw new UnauthenticatedError('invalid credentials!');
+
+  const isCorrectPassword = await user.comparePassword(password);
+
+  if (!isCorrectPassword)
+    throw new UnauthenticatedError('invalid credentials!');
+
+  if (!user.isVerified)
+    throw new UnauthorizedError(
+      'user is not verified. Please check your email for verification istructions'
+    );
+
+  const accessToken = await user.createJWT();
+
+  delete user._doc.password;
+
+  res
+    .status(StatusCodes.OK)
+    .cookie('token', accessToken, { sameSite: 'none', secure: true })
+    .json({ msg: 'login successful', user });
 };
 
 const verify = async (req, res) => {
@@ -52,4 +85,4 @@ const verify = async (req, res) => {
   }
 };
 
-module.exports = { register, verify };
+module.exports = { register, login, verify };
