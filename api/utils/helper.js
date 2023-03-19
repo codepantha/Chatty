@@ -1,12 +1,17 @@
 const jwt = require('jsonwebtoken');
 const { JWT_KEY } = require('../config/constants');
 const NotFoundError = require('../errors/NotFound');
+const UnauthenticatedError = require('../errors/Unauthenticated');
 const User = require('../models/User');
 const sendVerificationEmail = require('./email/verifyEmail');
 
-const decodeToken = (tokenToDecrypt, email = null, res = null) => {
+const decodeToken = (tokenToDecrypt, email = null, res = null, type=null) => {
   return jwt.verify(tokenToDecrypt, JWT_KEY, (err, decoded) => {
-    if (err && err.name === 'TokenExpiredError') resendToken(email, res);
+    if (err && err.name === 'TokenExpiredError') {
+      if (type === 'registration')
+        resendToken(email, res);
+      else throw new UnauthenticatedError('session expired. Please log in.')
+    }
     else return decoded;
   });
 };
