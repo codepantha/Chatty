@@ -58,10 +58,19 @@ const start = async () => {
           connection.username = username;
         }
       }
-      
-      console.log([...wsServer.clients].map(client => client.username));
-    });
 
+      // get online users
+      [...wsServer.clients].map((client) => {
+        client.send(
+          JSON.stringify({
+            online: [...wsServer.clients].map((client) => ({
+              userId: client.userId,
+              username: client.username
+            }))
+          })
+        );
+      });
+    });
   } catch (e) {
     console.log(e);
   }
