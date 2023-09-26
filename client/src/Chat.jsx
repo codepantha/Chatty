@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { uniqBy } from 'lodash';
 
 import Avatar from './Avatar';
@@ -31,7 +31,7 @@ const Chat = () => {
   const handleMessage = (e) => {
     const messageData = JSON.parse(e.data);
     if ('online' in messageData) showOnlineUsers(messageData);
-    else setMessages((prev) => [...prev, { ...messageData, isOurs: false }])
+    else setMessages((prev) => [...prev, { ...messageData }]);
   };
 
   const sendMessage = (e) => {
@@ -44,7 +44,15 @@ const Chat = () => {
       })
     );
 
-    setMessages((prev) => [...prev, { text: newMessageText, sender: id, recipient: selectedUserId, isOurs: true }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        text: newMessageText,
+        sender: id,
+        recipient: selectedUserId,
+        id: Date.now()
+      }
+    ]);
     setNewMessageText('');
   };
 
@@ -53,6 +61,10 @@ const Chat = () => {
   delete onlineUsersExcludingLoggedInUser[id];
 
   const messagesWithoutDuplicates = uniqBy(messages, 'id');
+
+  const isSender = useMemo(() => {
+    return (message) => message.sender === id;
+  }, [id]);
 
   return (
     <div className="flex h-screen">
@@ -88,10 +100,23 @@ const Chat = () => {
           )}
 
           {selectedUserId && (
-            <div>
-              {messagesWithoutDuplicates.map(message => (
-                <div>{message.text}</div>
-              ))}
+            <div className="relative h-full">
+              <div className="overflow-y-scroll absolute inset-0">
+                {messagesWithoutDuplicates.map((message) => (
+                  <div
+                    className={isSender(message) ? 'text-right' : 'text-left'}
+                  >
+                    <p
+                      className={`text-left inline-block p-2 my-2
+                    md:max-w-[60%] max-w-[75%] rounded-md ${
+                      isSender(message) ? 'bg-blue-600 text-white' : 'bg-white'
+                    }`}
+                    >
+                      {message.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
