@@ -1,9 +1,49 @@
 import React, { useEffect, useState } from 'react';
+import { HiOutlineChat } from 'react-icons/hi';
+import Avatar from './Avatar';
 
 const Chat = () => {
+  const [ws, setWs] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState({});
+  const [selectedUserId, setSelectedUserId] = useState(null);
+
+  useEffect(() => {
+    const ws = new WebSocket('ws://localhost:5000/');
+    setWs(ws);
+    ws.addEventListener('message', handleMessage);
+  }, []);
+
+  const showOnlineUsers = (users) => {
+    const onlineUsers = {};
+    users.online.map(
+      ({ userId, username }) => (onlineUsers[userId] = username)
+    );
+    setOnlineUsers(onlineUsers);
+  };
+
+  const handleMessage = (e) => {
+    const messageData = JSON.parse(e.data);
+    if ('online' in messageData) showOnlineUsers(messageData);
+  };
+
   return (
     <div className="flex h-screen">
-      <div className="bg-white w-1/3">contacts</div>
+      <div className="bg-white w-1/3">
+        <div className="text-blue-600 font-bold flex gap-2 mb-4 p-4">
+          <HiOutlineChat className="w-6 h-6" />
+          <h3>Chatty</h3>
+        </div>
+        {Object.keys(onlineUsers).map((userId) => (
+          <div
+            onClick={() => setSelectedUserId(userId)}
+            className={`border-b border-gray-100 py-2 px-4 flex items-center
+            gap-2 cursor-pointer ${selectedUserId === userId && 'bg-blue-50 transition-all shadow-sm'}`}
+          >
+            <Avatar userId={userId} username={onlineUsers[userId]} />
+            <p className="text-gray-800 font-medium">{onlineUsers[userId]}</p>
+          </div>
+        ))}
+      </div>
       <div className="flex flex-col bg-blue-100 w-2/3 p-2">
         <div className="flex-1">Messages with selected contact</div>
         <div className="flex gap-2">
