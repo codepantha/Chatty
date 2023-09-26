@@ -42,6 +42,7 @@ const start = async () => {
     const wsServer = new ws.WebSocketServer({ server });
     wsServer.on('connection', (connection, req) => {
       const cookies = req.headers.cookie;
+      // get username and id from the cookie
       // let's ensure we get our token that starts with 'token='
       // incase there are more cookies in the headers
       // note: multiple cookies are separated by ';'
@@ -59,7 +60,21 @@ const start = async () => {
         }
       }
 
-      // get online users
+      connection.on('message', (message) => {
+        const messageData = JSON.parse(message.toString());
+        const { recipient, text } = messageData;
+
+        if (recipient && text) {
+          // the recipient may be connected on multiple devices
+          // that's why we use filter instead of find to get
+          // all connection instances and notify him
+          [...wsServer.clients]
+            .filter((client) => client.userId === recipient)
+            .forEach((c) => c.send(JSON.stringify({ text })));
+        }
+      });
+
+      // notify everyone about online users
       [...wsServer.clients].map((client) => {
         client.send(
           JSON.stringify({

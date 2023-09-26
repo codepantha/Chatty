@@ -8,6 +8,8 @@ const Chat = () => {
   const [ws, setWs] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [newMessageText, setNewMessageText] = useState('');
+  const [messages, setMessages] = useState([]);
 
   const { id } = useContext(UserContext);
 
@@ -28,6 +30,21 @@ const Chat = () => {
   const handleMessage = (e) => {
     const messageData = JSON.parse(e.data);
     if ('online' in messageData) showOnlineUsers(messageData);
+    else setMessages((prev) => [...prev, { isOurs: false, text: messageData.text }])
+  };
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+
+    ws.send(
+      JSON.stringify({
+        recipient: selectedUserId,
+        text: newMessageText
+      })
+    );
+
+    setNewMessageText('');
+    setMessages((prev) => [...prev, { text: newMessageText, isOurs: true }]);
   };
 
   // show all online users except logged in user
@@ -58,30 +75,53 @@ const Chat = () => {
         ))}
       </div>
       <div className="flex flex-col bg-blue-100 w-2/3 p-2">
-        <div className="flex-1">Messages with selected contact</div>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Start typing..."
-            className="bg-white flex-grow border rounded-sm p-2"
-          />
-          <button className="bg-blue-500 p-2 text-white rounded-sm">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-              />
-            </svg>
-          </button>
+        <div className="flex-1">
+          {!selectedUserId && (
+            <div className="flex h-full flex-grow items-center justify-center">
+              <p className="text-gray-400 font-semibold">
+                &larr; Select a chat from the sidebar
+              </p>
+            </div>
+          )}
+
+          {selectedUserId && (
+            <div>
+              {messages.map(message => (
+                <div>{message.text}</div>
+              ))}
+            </div>
+          )}
         </div>
+        {selectedUserId && (
+          <form className="flex gap-2" onSubmit={sendMessage}>
+            <input
+              value={newMessageText}
+              onChange={(e) => setNewMessageText(e.target.value)}
+              type="text"
+              placeholder="Start typing..."
+              className="bg-white flex-grow border rounded-sm p-2"
+            />
+            <button
+              type="submit"
+              className="bg-blue-500 p-2 text-white rounded-sm"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+                />
+              </svg>
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
