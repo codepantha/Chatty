@@ -5,6 +5,7 @@ import Avatar from './Avatar';
 import Logo from './Logo';
 import { UserContext } from './context/UserContext';
 import MessageBox from './MessageBox';
+import axios from 'axios';
 
 const Chat = () => {
   const [ws, setWs] = useState(null);
@@ -18,10 +19,20 @@ const Chat = () => {
   const { id } = useContext(UserContext);
 
   useEffect(() => {
+    establishWebSocketonnection();
+  }, []);
+
+  const establishWebSocketonnection = () => {
     const ws = new WebSocket('ws://localhost:5000/');
     setWs(ws);
     ws.addEventListener('message', handleMessage);
-  }, []);
+    ws.addEventListener('close', () => {
+      setTimeout(() => {
+        establishWebSocketonnection()
+        console.log('Connection lost. Reconnecting...')
+      }, 1000)
+    })
+  }
 
   const showOnlineUsers = (users) => {
     const onlineUsers = {};
@@ -53,7 +64,7 @@ const Chat = () => {
         text: newMessageText,
         sender: id,
         recipient: selectedUserId,
-        id: Date.now()
+        _id: Date.now()
       }
     ]);
     setNewMessageText('');
@@ -64,11 +75,17 @@ const Chat = () => {
     if (div) div.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages]);
 
+  useEffect(() => {
+    axios.get(`/messages/${selectedUserId}`)
+      .then((res) => setMessages(res.data))
+      .catch((e) => console.log(e))
+  }, [selectedUserId]);
+
   // show all online users except logged in user
   const onlineUsersExcludingLoggedInUser = { ...onlineUsers };
   delete onlineUsersExcludingLoggedInUser[id];
 
-  const messagesWithoutDuplicates = uniqBy(messages, 'id');
+  const messagesWithoutDuplicates = uniqBy(messages, '_id');
 
   const isSender = useMemo(() => {
     return (message) => message.sender === id;
