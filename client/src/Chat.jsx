@@ -1,9 +1,10 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 
 import Avatar from './Avatar';
 import Logo from './Logo';
 import { UserContext } from './context/UserContext';
+import MessageBox from './MessageBox';
 
 const Chat = () => {
   const [ws, setWs] = useState(null);
@@ -11,6 +12,8 @@ const Chat = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [newMessageText, setNewMessageText] = useState('');
   const [messages, setMessages] = useState([]);
+
+  const bottomMessageRef = useRef(null);
 
   const { id } = useContext(UserContext);
 
@@ -55,6 +58,11 @@ const Chat = () => {
     ]);
     setNewMessageText('');
   };
+
+  useEffect(() => {
+    const div = bottomMessageRef.current;
+    if (div) div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages]);
 
   // show all online users except logged in user
   const onlineUsersExcludingLoggedInUser = { ...onlineUsers };
@@ -103,23 +111,14 @@ const Chat = () => {
             <div className="relative h-full">
               <div className="overflow-y-scroll absolute inset-0">
                 {messagesWithoutDuplicates.map((message) => (
-                  <div
-                    className={isSender(message) ? 'text-right' : 'text-left'}
-                  >
-                    <p
-                      className={`text-left inline-block p-2 my-2
-                    md:max-w-[60%] max-w-[75%] rounded-md ${
-                      isSender(message) ? 'bg-blue-600 text-white' : 'bg-white'
-                    }`}
-                    >
-                      {message.text}
-                    </p>
-                  </div>
+                  <MessageBox message={message} isSender={isSender(message)} />
                 ))}
+              <div className="h-4" ref={bottomMessageRef} />
               </div>
             </div>
           )}
         </div>
+
         {selectedUserId && (
           <form className="flex gap-2" onSubmit={sendMessage}>
             <input
