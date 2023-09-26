@@ -15,6 +15,7 @@ const errorHandlerMiddleware = require('./middleware/errorHandler');
 // routes
 const authRouter = require('./routes/auth.routes');
 const userRouter = require('./routes/user.routes');
+const messageRouter = require('./routes/messages.routes');
 const { decodeToken } = require('./utils/helper');
 const Message = require('./models/Message');
 
@@ -27,6 +28,7 @@ app.use(cookieParser());
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/messages', messageRouter)
 
 app.use(errorHandlerMiddleware);
 
@@ -84,7 +86,7 @@ const start = async () => {
                   text,
                   sender: connection.userId,
                   recipient,
-                  id: messageDoc._id
+                  _id: messageDoc._id
                 })
               )
             );
