@@ -16,6 +16,7 @@ const errorHandlerMiddleware = require('./middleware/errorHandler');
 const authRouter = require('./routes/auth.routes');
 const userRouter = require('./routes/user.routes');
 const { decodeToken } = require('./utils/helper');
+const Message = require('./models/Message');
 
 const app = express();
 
@@ -60,17 +61,33 @@ const start = async () => {
         }
       }
 
-      connection.on('message', (message) => {
+      connection.on('message', async (message) => {
         const messageData = JSON.parse(message.toString());
         const { recipient, text } = messageData;
 
         if (recipient && text) {
+          // save message to db
+          const messageDoc = await Message.create({
+            sender: connection.userId,
+            recipient,
+            text
+          });
+
           // the recipient may be connected on multiple devices
           // that's why we use filter instead of find to get
           // all connection instances and notify him
           [...wsServer.clients]
             .filter((client) => client.userId === recipient)
-            .forEach((c) => c.send(JSON.stringify({ text })));
+            .forEach((c) =>
+              c.send(
+                JSON.stringify({
+                  text,
+                  sender: connection.userId,
+                  recipient,
+                  id: messageDoc._id
+                })
+              )
+            );
         }
       });
 

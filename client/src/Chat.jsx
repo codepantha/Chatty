@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { uniqBy } from 'lodash';
 
 import Avatar from './Avatar';
 import Logo from './Logo';
@@ -30,7 +31,7 @@ const Chat = () => {
   const handleMessage = (e) => {
     const messageData = JSON.parse(e.data);
     if ('online' in messageData) showOnlineUsers(messageData);
-    else setMessages((prev) => [...prev, { isOurs: false, text: messageData.text }])
+    else setMessages((prev) => [...prev, { ...messageData, isOurs: false }])
   };
 
   const sendMessage = (e) => {
@@ -43,13 +44,15 @@ const Chat = () => {
       })
     );
 
+    setMessages((prev) => [...prev, { text: newMessageText, sender: id, recipient: selectedUserId, isOurs: true }]);
     setNewMessageText('');
-    setMessages((prev) => [...prev, { text: newMessageText, isOurs: true }]);
   };
 
   // show all online users except logged in user
   const onlineUsersExcludingLoggedInUser = { ...onlineUsers };
   delete onlineUsersExcludingLoggedInUser[id];
+
+  const messagesWithoutDuplicates = uniqBy(messages, 'id');
 
   return (
     <div className="flex h-screen">
@@ -86,7 +89,7 @@ const Chat = () => {
 
           {selectedUserId && (
             <div>
-              {messages.map(message => (
+              {messagesWithoutDuplicates.map(message => (
                 <div>{message.text}</div>
               ))}
             </div>
