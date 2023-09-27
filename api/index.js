@@ -28,7 +28,7 @@ app.use(cookieParser());
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
-app.use('/api/v1/messages', messageRouter)
+app.use('/api/v1/messages', messageRouter);
 
 app.use(errorHandlerMiddleware);
 
@@ -44,6 +44,31 @@ const start = async () => {
     // set up websocket connection
     const wsServer = new ws.WebSocketServer({ server });
     wsServer.on('connection', (connection, req) => {
+      // notify everyone about online users
+      const notifyOnlineUsers = () => {
+        const onlineUsers = [...wsServer.clients].map((client) => ({
+          userId: client.userId,
+          username: client.username
+        }));
+
+        [...wsServer.clients].forEach((client) => {
+          client.send(JSON.stringify({ online: onlineUsers }));
+        });
+      };
+
+      connection.timer = setInterval(() => {
+        connection.ping();
+
+        connection.deathTimer = setTimeout(() => {
+          connection.terminate();
+          notifyOnlineUsers()
+        }, 1000);
+      }, 5000);
+
+      connection.on('pong', () => {
+        clearTimeout(connection.deathTimer);
+      });
+
       const cookies = req.headers.cookie;
       // get username and id from the cookie
       // let's ensure we get our token that starts with 'token='
@@ -93,17 +118,7 @@ const start = async () => {
         }
       });
 
-      // notify everyone about online users
-      [...wsServer.clients].map((client) => {
-        client.send(
-          JSON.stringify({
-            online: [...wsServer.clients].map((client) => ({
-              userId: client.userId,
-              username: client.username
-            }))
-          })
-        );
-      });
+      notifyOnlineUsers();
     });
   } catch (e) {
     console.log(e);
