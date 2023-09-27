@@ -28,11 +28,11 @@ const Chat = () => {
     ws.addEventListener('message', handleMessage);
     ws.addEventListener('close', () => {
       setTimeout(() => {
-        establishWebSocketonnection()
-        console.log('Connection lost. Reconnecting...')
-      }, 1000)
-    })
-  }
+        establishWebSocketonnection();
+        console.log('Connection lost. Reconnecting...');
+      }, 1000);
+    });
+  };
 
   const showOnlineUsers = (users) => {
     const onlineUsers = {};
@@ -76,9 +76,10 @@ const Chat = () => {
   }, [messages]);
 
   useEffect(() => {
-    axios.get(`/messages/${selectedUserId}`)
+    axios
+      .get(`/messages/${selectedUserId}`)
       .then((res) => setMessages(res.data))
-      .catch((e) => console.log(e))
+      .catch((e) => console.log(e));
   }, [selectedUserId]);
 
   // show all online users except logged in user
@@ -108,7 +109,11 @@ const Chat = () => {
               <div className="w-1 h-12 bg-blue-500 rounded-r-md" />
             )}
             <div className="flex gap-2 items-center py-2 px-4">
-              <Avatar userId={userId} username={onlineUsers[userId]} />
+              <Avatar
+                online={true}
+                userId={userId}
+                username={onlineUsers[userId]}
+              />
               <p className="text-gray-800 font-medium">{onlineUsers[userId]}</p>
             </div>
           </div>
@@ -128,9 +133,13 @@ const Chat = () => {
             <div className="relative h-full">
               <div className="overflow-y-scroll absolute inset-0">
                 {messagesWithoutDuplicates.map((message) => (
-                  <MessageBox message={message} isSender={isSender(message)} />
+                  <MessageBox
+                    key={message._id}
+                    message={message}
+                    isSender={isSender(message)}
+                  />
                 ))}
-              <div className="h-4" ref={bottomMessageRef} />
+                <div className="h-4" ref={bottomMessageRef} />
               </div>
             </div>
           )}
