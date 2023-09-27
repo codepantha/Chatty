@@ -60,6 +60,7 @@ const start = async () => {
         connection.ping();
 
         connection.deathTimer = setTimeout(() => {
+          clearInterval(connection.timer);
           connection.terminate();
           notifyOnlineUsers()
         }, 1000);
