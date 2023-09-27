@@ -63,7 +63,7 @@ const start = async () => {
           connection.terminate();
           notifyOnlineUsers()
         }, 1000);
-      }, 5000);
+      }, 8000);
 
       connection.on('pong', () => {
         clearTimeout(connection.deathTimer);

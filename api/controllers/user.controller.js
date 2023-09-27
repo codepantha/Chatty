@@ -56,6 +56,13 @@ const login = async (req, res) => {
     .json({ msg: 'login successful', user });
 };
 
+const logout = async (req, res) => {
+  res
+    .status(StatusCodes.OK)
+    .cookie('token', '', { sameSite: 'none', secure: true })
+    .json('ok');
+};
+
 const verify = async (req, res) => {
   const {
     params: { token },
@@ -98,4 +105,4 @@ const index = async (req, res) => {
   res.json(users);
 };
 
-module.exports = { register, login, verify, profile, index };
+module.exports = { register, login, verify, profile, index, logout };

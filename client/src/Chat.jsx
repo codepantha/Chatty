@@ -14,10 +14,9 @@ const Chat = () => {
   const [newMessageText, setNewMessageText] = useState('');
   const [messages, setMessages] = useState([]);
   const [offlineUsers, setOfflineUsers] = useState([]);
+  const { id, setId, username, setUsername } = useContext(UserContext);
 
   const bottomMessageRef = useRef(null);
-
-  const { id } = useContext(UserContext);
 
   useEffect(() => {
     establishWebSocketonnection();
@@ -110,34 +109,58 @@ const Chat = () => {
     return (message) => message.sender === id;
   }, [id]);
 
+  const logout = () => {
+    console.log('clicked logout')
+    axios
+      .delete('/auth/logout')
+      .then(() => {
+        setId(null);
+        setUsername(null);
+      })
+      .catch((e) => console.log(e));
+  };
+
   return (
     <div className="flex h-screen">
-      <div className="bg-white w-1/3">
-        <Logo />
+      <div className="bg-white w-1/3 flex flex-col relative">
+        <div className="flex-grow overflow-y-scroll">
+          <Logo />
 
-        {/* Online users */}
-        {Object.keys(onlineUsersExcludingLoggedInUser).map((userId) => (
-          <Contact
-            key={userId}
-            id={userId}
-            username={onlineUsers[userId]}
-            online={true}
-            selected={selectedUserId === userId}
-            setSelectedUserId={setSelectedUserId}
-          />
-        ))}
+          {/* Online users */}
+          {Object.keys(onlineUsersExcludingLoggedInUser).map((userId) => (
+            <Contact
+              key={userId}
+              id={userId}
+              username={onlineUsers[userId]}
+              online={true}
+              selected={selectedUserId === userId}
+              setSelectedUserId={setSelectedUserId}
+            />
+          ))}
 
-        {/* Offline users */}
-        {offlineUsers.map(({ _id, username }) => (
-          <Contact
-            key={_id}
-            id={_id}
-            username={username}
-            online={false}
-            selected={selectedUserId === _id}
-            setSelectedUserId={setSelectedUserId}
-          />
-        ))}
+          {/* Offline users */}
+          {offlineUsers.map(({ _id, username }) => (
+            <Contact
+              key={_id}
+              id={_id}
+              username={username}
+              online={false}
+              selected={selectedUserId === _id}
+              setSelectedUserId={setSelectedUserId}
+            />
+          ))}
+        </div>
+
+        <div className="p2 text-center">
+          <button
+            onClick={logout}
+            className="text-sm bg-blue-100 p-2 px-2 shadow-md
+             transition-all text-gray-500 border rounded-md my-4
+             hover:bg-blue-200 hover:text-gray-600 font-semibold"
+          >
+            Logout
+          </button>
+        </div>
       </div>
       <div className="flex flex-col bg-blue-100 w-2/3 p-2">
         <div className="flex-1">
