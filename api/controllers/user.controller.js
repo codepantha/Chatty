@@ -56,6 +56,13 @@ const login = async (req, res) => {
     .json({ msg: 'login successful', user });
 };
 
+const logout = async (req, res) => {
+  res
+    .status(StatusCodes.OK)
+    .cookie('token', '', { sameSite: 'none', secure: true })
+    .json('ok');
+};
+
 const verify = async (req, res) => {
   const {
     params: { token },
@@ -63,7 +70,7 @@ const verify = async (req, res) => {
   } = req;
 
   if (token) {
-    const decoded = decodeToken(token, email, res, type="registration");
+    const decoded = decodeToken(token, email, res, (type = 'registration'));
     if (!decoded) return;
 
     const { userId } = decoded;
@@ -88,9 +95,14 @@ const profile = async (req, res) => {
   const { token } = req.cookies;
 
   if (token) {
-    const { userId, username } = decodeToken(token)
-    return res.json({ userId, username })
+    const { userId, username } = decodeToken(token);
+    return res.json({ userId, username });
   }
 };
 
-module.exports = { register, login, verify, profile };
+const index = async (req, res) => {
+  const users = await User.find({}, { _id: 1, username: 1 });
+  res.json(users);
+};
+
+module.exports = { register, login, verify, profile, index, logout };
