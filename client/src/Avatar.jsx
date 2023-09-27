@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Avatar = ({ userId, username, online }) => {
+const Avatar = ({ userId, username, online = false }) => {
   const generateBG = () => {
     const colors = [
       'bg-red-200',

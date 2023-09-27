@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
 
-import Avatar from './Avatar';
 import Logo from './Logo';
 import { UserContext } from './context/UserContext';
 import MessageBox from './MessageBox';
 import axios from 'axios';
+import Contact from './Contact';
 
 const Chat = () => {
   const [ws, setWs] = useState(null);
@@ -13,6 +13,7 @@ const Chat = () => {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [newMessageText, setNewMessageText] = useState('');
   const [messages, setMessages] = useState([]);
+  const [offlineUsers, setOfflineUsers] = useState([]);
 
   const bottomMessageRef = useRef(null);
 
@@ -36,15 +37,13 @@ const Chat = () => {
 
   const showOnlineUsers = (users) => {
     const onlineUsers = {};
-    users.online.map(
-      ({ userId, username }) => (onlineUsers[userId] = username)
-    );
+    users.map(({ userId, username }) => (onlineUsers[userId] = username));
     setOnlineUsers(onlineUsers);
   };
 
   const handleMessage = (e) => {
     const messageData = JSON.parse(e.data);
-    if ('online' in messageData) showOnlineUsers(messageData);
+    if ('online' in messageData) showOnlineUsers(messageData.online);
     else setMessages((prev) => [...prev, { ...messageData }]);
   };
 
@@ -76,6 +75,25 @@ const Chat = () => {
   }, [messages]);
 
   useEffect(() => {
+    let allUsers = [];
+    let offlineUsers = [];
+    axios
+      .get('/users')
+      .then((res) => {
+        allUsers = res.data;
+
+        allUsers.forEach((user) => {
+          if (!Object.keys(onlineUsers).includes(user._id))
+            offlineUsers.push(user);
+        });
+        setOfflineUsers(offlineUsers);
+        console.log({ offlineUsers });
+        console.log({ total: allUsers.length });
+      })
+      .catch((e) => console.log(e));
+  }, [onlineUsers]);
+
+  useEffect(() => {
     axios
       .get(`/messages/${selectedUserId}`)
       .then((res) => setMessages(res.data))
@@ -96,27 +114,29 @@ const Chat = () => {
     <div className="flex h-screen">
       <div className="bg-white w-1/3">
         <Logo />
+
+        {/* Online users */}
         {Object.keys(onlineUsersExcludingLoggedInUser).map((userId) => (
-          <div
+          <Contact
             key={userId}
-            onClick={() => setSelectedUserId(userId)}
-            className={`border-b border-gray-100 flex items-center
-            gap-2 cursor-pointer ${
-              selectedUserId === userId && 'bg-blue-50 transition-all shadow-sm'
-            }`}
-          >
-            {selectedUserId === userId && (
-              <div className="w-1 h-12 bg-blue-500 rounded-r-md" />
-            )}
-            <div className="flex gap-2 items-center py-2 px-4">
-              <Avatar
-                online={true}
-                userId={userId}
-                username={onlineUsers[userId]}
-              />
-              <p className="text-gray-800 font-medium">{onlineUsers[userId]}</p>
-            </div>
-          </div>
+            id={userId}
+            username={onlineUsers[userId]}
+            online={true}
+            selected={selectedUserId === userId}
+            setSelectedUserId={setSelectedUserId}
+          />
+        ))}
+
+        {/* Offline users */}
+        {offlineUsers.map(({ _id, username }) => (
+          <Contact
+            key={_id}
+            id={_id}
+            username={username}
+            online={false}
+            selected={selectedUserId === _id}
+            setSelectedUserId={setSelectedUserId}
+          />
         ))}
       </div>
       <div className="flex flex-col bg-blue-100 w-2/3 p-2">
