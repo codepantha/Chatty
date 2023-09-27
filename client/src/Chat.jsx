@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
+import { RxAvatar } from 'react-icons/rx'
 
 import Logo from './Logo';
 import { UserContext } from './context/UserContext';
@@ -116,6 +117,8 @@ const Chat = () => {
       .then(() => {
         setId(null);
         setUsername(null);
+        setWs(null);
+        window.location.reload();
       })
       .catch((e) => console.log(e));
   };
@@ -151,7 +154,11 @@ const Chat = () => {
           ))}
         </div>
 
-        <div className="p2 text-center">
+        <div className="p2 text-center flex justify-center items-center gap-3">
+          <div className="flex flex-col items-center text-md text-gray-600">
+            <RxAvatar fontSize={24} />
+            <p>{username}</p>
+          </div>
           <button
             onClick={logout}
             className="text-sm bg-blue-100 p-2 px-2 shadow-md
