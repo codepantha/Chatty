@@ -45,10 +45,7 @@ const Chat = () => {
   const handleMessage = (e) => {
     const messageData = JSON.parse(e.data);
     if ('online' in messageData) showOnlineUsers(messageData.online);
-    else {
-      if (messageData.sender === selectedUserId)
-        setMessages((prev) => [...prev, { ...messageData }]);
-    }
+    else setMessages((prev) => [...prev, { ...messageData }]);
   };
 
   const sendMessage = (e, file = null) => {
@@ -62,22 +59,21 @@ const Chat = () => {
       })
     );
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        text: newMessageText,
-        sender: id,
-        recipient: selectedUserId,
-        _id: Date.now()
-      }
-    ]);
+    axios.get(`/messages/${selectedUserId}`)
+      .then((res) => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: newMessageText,
+            file: res.data.at(-1).file,
+            sender: id,
+            recipient: selectedUserId,
+            _id: Date.now()
+          }
+        ]);
+        setNewMessageText('');
+      })
 
-    if (file) {
-      axios
-        .get(`/messages/${selectedUserId}`)
-        .then((res) => setMessages(res.data));
-    }
-    setNewMessageText('');
   };
 
   const handleSendFile = (e) => {
@@ -87,7 +83,7 @@ const Chat = () => {
     reader.onload = () => {
       sendMessage(null, {
         name: e.target.files[0].name,
-        data: reader.result
+        data: reader.result,
       });
     };
   };
