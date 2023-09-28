@@ -6,6 +6,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const ws = require('ws');
+const fs = require('fs');
 
 const connectDB = require('./db/connect');
 
@@ -25,6 +26,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(cors({ origin: 'http://127.0.0.1:5173', credentials: true }));
 app.use(cookieParser());
+app.use('/uploads', express.static(__dirname + '/uploads'));
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
@@ -91,14 +93,30 @@ const start = async () => {
 
       connection.on('message', async (message) => {
         const messageData = JSON.parse(message.toString());
-        const { recipient, text } = messageData;
+        const { recipient, text, file } = messageData;
 
-        if (recipient && text) {
+        let fileName = null;
+        
+        if (file) {
+          const parts = file.name.split('.');
+          const fileExt = parts.at(-1)
+          fileName = Date.now() + '.' + fileExt;
+          const path = __dirname + '/uploads/' + fileName;
+
+          const bufferData = new Buffer(file.data.split(',')[1], 'base64');
+
+          fs.writeFile(path, bufferData, () => {
+            console.log('file uploaded' + path)
+          })
+        }
+
+        if (recipient && (text || file)) {
           // save message to db
           const messageDoc = await Message.create({
             sender: connection.userId,
             recipient,
-            text
+            text,
+            file: file ? fileName : null
           });
 
           // the recipient may be connected on multiple devices
@@ -110,6 +128,7 @@ const start = async () => {
               c.send(
                 JSON.stringify({
                   text,
+                  file: file ? fileName : null,
                   sender: connection.userId,
                   recipient,
                   _id: messageDoc._id
