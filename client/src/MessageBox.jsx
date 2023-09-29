@@ -1,5 +1,6 @@
 import axios from 'axios';
 import React, { useMemo } from 'react';
+import { HiOutlineDocument } from 'react-icons/hi2';
 import { ImAttachment } from 'react-icons/im';
 
 const MessageBox = ({ message, isSender }) => {
@@ -10,7 +11,11 @@ const MessageBox = ({ message, isSender }) => {
   };
 
   const isAudioFile = () => {
-    return ['mp3', 'ogg', 'wav'].includes(getFileType());
+    return ['mp3', 'ogg', 'wav', 'flac'].includes(getFileType());
+  };
+
+  const isVideoFile = () => {
+    return ['mp4', '3gp', 'avi', 'webm'].includes(getFileType());
   };
 
   const isImageFile = () => {
@@ -45,8 +50,19 @@ const MessageBox = ({ message, isSender }) => {
             </div>
           ) : isAudioFile() ? (
             <audio src={filePath} controls />
+          ) : isVideoFile() ? (
+            <video src={filePath} controls />
           ) : (
-            ''
+            <a
+              className={`text-left p-2 my-2
+             rounded-md break-words flex ${
+               isSender ? 'bg-blue-600 text-white' : 'bg-white'
+             }`}
+              href={filePath}
+            >
+              <HiOutlineDocument fontSize={24} />
+              <p className="border-b border-gray-400">{message.file}</p>
+            </a>
           )}
         </div>
       )}
