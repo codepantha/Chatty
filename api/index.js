@@ -64,7 +64,7 @@ const start = async () => {
         connection.deathTimer = setTimeout(() => {
           clearInterval(connection.timer);
           connection.terminate();
-          notifyOnlineUsers()
+          notifyOnlineUsers();
         }, 1000);
       }, 6000);
 
@@ -72,23 +72,27 @@ const start = async () => {
         clearTimeout(connection.deathTimer);
       });
 
-      const cookies = req.headers.cookie;
-      // get username and id from the cookie
-      // let's ensure we get our token that starts with 'token='
-      // incase there are more cookies in the headers
-      // note: multiple cookies are separated by ';'
-      const cookieString = cookies
-        .split(';')
-        .find((cookie) => cookie.startsWith('token='));
-      if (cookieString) {
-        const token = cookieString.split('=')[1];
+      try {
+        const cookies = req.headers.cookie;
+        // get username and id from the cookie
+        // let's ensure we get our token that starts with 'token='
+        // incase there are more cookies in the headers
+        // note: multiple cookies are separated by ';'
+        const cookieString = cookies
+          .split(';')
+          .find((cookie) => cookie.startsWith('token='));
+        if (cookieString) {
+          const token = cookieString.split('=')[1];
 
-        if (token) {
-          const { userId, username } = decodeToken(token);
+          if (token) {
+            const { userId, username } = decodeToken(token);
 
-          connection.userId = userId;
-          connection.username = username;
+            connection.userId = userId;
+            connection.username = username;
+          }
         }
+      } catch (err) {
+        console.log(err);
       }
 
       connection.on('message', async (message) => {
@@ -96,18 +100,18 @@ const start = async () => {
         const { recipient, text, file } = messageData;
 
         let fileName = null;
-        
+
         if (file) {
           const parts = file.name.split('.');
-          const fileExt = parts.at(-1)
+          const fileExt = parts.at(-1);
           fileName = Date.now() + '.' + fileExt;
           const path = __dirname + '/uploads/' + fileName;
 
           const bufferData = new Buffer(file.data.split(',')[1], 'base64');
 
           fs.writeFile(path, bufferData, () => {
-            console.log('file uploaded' + path)
-          })
+            console.log('file uploaded' + path);
+          });
         }
 
         if (recipient && (text || file)) {
