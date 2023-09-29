@@ -59,21 +59,24 @@ const Chat = () => {
       })
     );
 
-    axios.get(`/messages/${selectedUserId}`)
-      .then((res) => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: newMessageText,
-            file: res.data.at(-1).file,
-            sender: id,
-            recipient: selectedUserId,
-            _id: Date.now()
-          }
-        ]);
-        setNewMessageText('');
-      })
+    setMessages((prev) => [
+      ...prev,
+      {
+        text: newMessageText,
+        file: messages.at(-1).file,
+        sender: id,
+        recipient: selectedUserId,
+        _id: Date.now()
+      }
+    ]);
 
+    setNewMessageText('');
+
+    setTimeout(() => {
+      axios
+        .get(`/messages/${selectedUserId}`)
+        .then((res) => setMessages(res.data));
+    }, 100);
   };
 
   const handleSendFile = (e) => {
@@ -83,7 +86,7 @@ const Chat = () => {
     reader.onload = () => {
       sendMessage(null, {
         name: e.target.files[0].name,
-        data: reader.result,
+        data: reader.result
       });
     };
   };
@@ -106,8 +109,6 @@ const Chat = () => {
             offlineUsers.push(user);
         });
         setOfflineUsers(offlineUsers);
-        console.log({ offlineUsers });
-        console.log({ total: allUsers.length });
       })
       .catch((e) => console.log(e));
   }, [onlineUsers]);
