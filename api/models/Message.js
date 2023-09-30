@@ -10,7 +10,8 @@ const MessageSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User'
     },
-    text: String
+    text: String,
+    file: String,
   },
   { timestamps: true }
 );

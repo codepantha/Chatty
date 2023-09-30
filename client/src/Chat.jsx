@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { uniqBy } from 'lodash';
-import { RxAvatar } from 'react-icons/rx'
+import { RxAvatar } from 'react-icons/rx';
+import { ImAttachment } from 'react-icons/im';
 
 import Logo from './Logo';
 import { UserContext } from './context/UserContext';
@@ -47,13 +48,14 @@ const Chat = () => {
     else setMessages((prev) => [...prev, { ...messageData }]);
   };
 
-  const sendMessage = (e) => {
-    e.preventDefault();
+  const sendMessage = (e, file = null) => {
+    if (e) e.preventDefault();
 
     ws.send(
       JSON.stringify({
         recipient: selectedUserId,
-        text: newMessageText
+        text: newMessageText,
+        file
       })
     );
 
@@ -61,12 +63,32 @@ const Chat = () => {
       ...prev,
       {
         text: newMessageText,
+        file: messages.at(-1).file,
         sender: id,
         recipient: selectedUserId,
         _id: Date.now()
       }
     ]);
+
     setNewMessageText('');
+
+    setTimeout(() => {
+      axios
+        .get(`/messages/${selectedUserId}`)
+        .then((res) => setMessages(res.data));
+    }, 100);
+  };
+
+  const handleSendFile = (e) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(e.target.files[0]);
+
+    reader.onload = () => {
+      sendMessage(null, {
+        name: e.target.files[0].name,
+        data: reader.result
+      });
+    };
   };
 
   useEffect(() => {
@@ -87,8 +109,6 @@ const Chat = () => {
             offlineUsers.push(user);
         });
         setOfflineUsers(offlineUsers);
-        console.log({ offlineUsers });
-        console.log({ total: allUsers.length });
       })
       .catch((e) => console.log(e));
   }, [onlineUsers]);
@@ -111,7 +131,7 @@ const Chat = () => {
   }, [id]);
 
   const logout = () => {
-    console.log('clicked logout')
+    console.log('clicked logout');
     axios
       .delete('/auth/logout')
       .then(() => {
@@ -204,6 +224,14 @@ const Chat = () => {
               placeholder="Start typing..."
               className="bg-white flex-grow border rounded-sm p-2"
             />
+            <label
+              className="rounded-sm bg-gray-200 p-2
+            text-gray-500 hover:text-gray-700 transition-all
+            border border-gray-300 cursor-pointer"
+            >
+              <input type="file" className="hidden" onChange={handleSendFile} />
+              <ImAttachment fontSize={24} />
+            </label>
             <button
               type="submit"
               className="bg-blue-500 p-2 text-white rounded-sm"
